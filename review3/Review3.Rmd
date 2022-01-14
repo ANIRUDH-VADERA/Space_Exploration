@@ -1,0 +1,214 @@
+---
+title: "Possibility of life on Exoplanets"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+i=read.csv(file="C:/Users/Anirudh/OneDrive/Desktop/ExoPla.csv")
+year<-unique(i$disc_year)
+```
+
+Column {data-width=500, .tabset}
+-----------------------------------------------------------------------
+
+### Gravitational Comparison
+
+```{r}
+library(plotly)
+library(ggplot2)
+p <- ggplot(data=i, aes(text=paste('Planet name: ',pl_name,
+                              '<br>Distance:',as.double(sy_dist*3.26156378),
+                              '<br>Gravitational pull experienced(in g):',
+                              as.double((10^(st_logg))/980)),
+            as.double((sy_dist)*3.26156378), 
+            as.double((10^(st_logg))/980)))+
+  geom_point(color= 'rgba(248, 0, 135, 0.7)',
+             shape=1,size=((i$pl_rade)-12))+
+  scale_y_continuous(limits=c(0,2))+
+  scale_x_continuous(limits=c(0,2000*3.26156378))+
+  xlab("Distance to the planetary system (in light years)")+
+  ylab("Gravity experienced at the stellar surface (in g)")+
+  geom_hline(yintercept=1, color= "blue")+
+  theme(
+  # get rid of panel grids
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  # Change plot and panel background
+  plot.background=element_rect(fill = "gray"),
+  panel.background = element_rect(fill = 'black'),
+  # Change legend 
+  legend.position = c(0.6, 0.07),
+  legend.direction = "horizontal",
+  legend.background = element_rect(fill = "black", color = NA),
+  legend.key = element_rect(color = "gray", fill = "black"),
+  legend.title = element_text(color = "white"),
+  legend.text = element_text(color = "white")
+  )
+  
+ggplotly(p, tooltip= "text")
+
+```
+
+### Day Comparison
+
+```{r}
+library(plotly)
+library(ggplot2)
+index=1
+equilibrium_Temperature=c()
+for (x in i$pl_eqt)
+{
+  if(is.na(x))
+    equilibrium_Temperature[index]="unknown"
+  else
+  {
+    if(x<300 )
+      equilibrium_Temperature[index]="<300K (habitable)"
+    else
+      equilibrium_Temperature[index]=">300K (not habitable)"
+  }
+  index=index+ 1
+}
+
+p<-ggplot(data=i, aes(as.double(sy_dist*3.26156378),as.double(st_rotp),
+                   text=paste('Planet name: ',pl_name,
+                           '<br>Distance:',as.double(sy_dist*3.26156378),
+                              '<br>Rotational Period(days): ',st_rotp,
+                              '<br>Equilibrium temperature: ',pl_eqt),
+                   color=equilibrium_Temperature))+
+  geom_point(shape=21, size=as.double(i$pl_radj))+
+  scale_color_manual(values=c("rgba(19, 236, 255, 1)"
+  ,"magenta","rgba(165, 150, 18, 0.7)"))+
+  scale_y_continuous(limits=c(0,3))+
+  scale_x_continuous(limits=c(0,2000*3.26156378))+
+  xlab("Distance to the planetary system (in light years)")+
+  ylab("Rotational Period/Length of day (in days)")+
+  geom_hline(yintercept=1, color= "green")+
+  theme(
+  # get rid of panel grids
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  # Change plot and panel background
+  plot.background=element_rect(fill = "gray"),
+  panel.background = element_rect(fill = 'black'),
+  # Change legend 
+  legend.position = c(0.6, 0.07),
+  legend.direction = "horizontal",
+  legend.background = element_rect(fill = "black", color = NA),
+  legend.key = element_rect(color = "gray", fill = "black"),
+  legend.title = element_text(color = "white"),
+  legend.text = element_text(color = "white")
+  )
+
+ggplotly(p, tooltip= "text")
+```
+
+### Orbital Period
+
+```{r}
+library(plotly)
+library(ggplot2)
+library(gghighlight)
+radius_e=i$pl_rade
+x=as.double(i$pl_orbper)
+y=as.double(i$pl_bmasse)
+ggp <- ggplot(data=i, 
+              aes(text=paste('Planet name: ',pl_name,
+                             '<br>Orbital Period(days): ',pl_orbper,
+                             '<br>Planet mass wrt Earth: ',pl_bmasse,
+                             '<br>Planet radius (in earth radius): '                                  ,pl_rade),x, y))+
+         geom_point(aes(fill= factor(radius_e)),
+                    shape=1,size=(radius_e), alpha=0.65)+
+         scale_y_continuous(limits=c(0.5,3))+
+         scale_x_continuous(limits=c(50,400))+
+         xlab("Rotational period (in days)")+
+         ylab("Mass of planet wrt Earth")+
+  theme(
+  # get rid of panel grids
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  # Change plot and panel background
+  plot.background=element_rect(fill = "gray"),
+  panel.background = element_rect(fill = 'black'),
+  # Change legend 
+  legend.position = c(0.6, 0.07),
+  legend.direction = "horizontal",
+  legend.background = element_rect(fill = "black", color = NA),
+  legend.key = element_rect(color = "gray", fill = "black"),
+  legend.title = element_text(color = "white"),
+  legend.text = element_text(color = "white")
+  )
+ 
+ggplotly(ggp, tooltip= "text")
+ 
+```
+
+Column {data-width=500, .tabset}
+-----------------------------------------------------------------------
+
+### Discovery growth
+
+```{r}
+times = c()
+y=1
+for (x in year)
+{
+  count=0
+  for(b in i$disc_year)
+  {
+    if(x==b)
+      count=count+1
+  }
+  times[y] = count
+  y=y+1
+}
+a<-matrix(c(year,times),ncol=2)
+plot(year,times,type='n',main="Number of discoveries per year",xlab="year",ylab="number of discoveries")
+lines(a,col="blue")
+points(a,col="magenta",pch=18)
+
+```
+
+### Discovery method
+
+```{r}
+values <- matrix(,nrow=4,ncol=length(year))
+count=1
+for(x in year)
+{
+  count_Imaging <- 0
+  count_Transit <- 0
+  count_Eclipse <- 0
+  count_Radial <- 0
+  z=1
+  for(y in i$disc_year)
+  {
+     if(x==y)
+     {
+        if (i[z,4] == 'Imaging'){ count_Imaging <- count_Imaging + 1}
+        else if(i[z,4] == 'Radial Velocity'){count_Radial <- count_Radial + 1}
+        else if(i[z,4] == 'Eclipse Timing Variations'){count_Eclipse <- count_Eclipse + 1}
+        else{count_Transit <- count_Transit + 1}
+     }
+     z=z+1
+  }
+  values[1,count]=count_Imaging
+  values[2,count]=count_Radial
+  values[3,count]=count_Eclipse
+  values[4,count]=count_Transit
+  count=count+1
+}
+par(bg="pink")
+label <-  c("Imaging","Radial Velocity","Eclipse Timing Variations","Transit")
+colors <- c("Blue","purple","yellow","red")
+barplot(values,main="no of discoveries and discovery method per year"
+        ,names.arg=year,xlab="year",ylab="number of discoveries",beside=TRUE,
+        col=colors)
+legend("topleft",label,cex=0.5,fill=colors)
+par(bg="white")
+```
+

@@ -1,0 +1,1454 @@
+---
+title: "Asteroid Prediction"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    smooth_scroll: true
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(dplyr)
+library(DT)
+library(stringr)
+library(scatterplot3d)
+options(rgl.useNULL=TRUE) 
+library(rgl)
+library(car)
+library(plotly)
+
+
+asteroid_data <- read.csv(file="C:/Users/Anirudh/OneDrive/Desktop/DV_REVIEW_ASTEROID.csv",header=TRUE,sep=',')
+asteroid_data <- data.frame(asteroid_data)
+
+
+asteroid_data <- asteroid_data[1:(length(asteroid_data)-1)]
+
+index=1
+for(x in asteroid_data$CA_Date)
+{
+  a=gsub('.{13}$','',x)
+  a=gsub('Â','',a)
+  a=gsub('Jan','01',a)
+  a=gsub('Feb','02',a)
+  a=gsub('Mar','03',a)
+  a=gsub('Apr','04',a)
+  a=gsub('May','05',a)
+  a=gsub('Jun','06',a)
+  a=gsub('Jul','07',a)
+  a=gsub('Aug','08',a)
+  a=gsub('Sep','09',a)
+  a=gsub('Oct','10',a)
+  a=gsub('Nov','11',a)
+  a=gsub('Dec','12',a)
+  asteroid_data$CA_Date[index] = a
+  index=index+1
+}
+
+asteroid_data %>% 
+  mutate(across(where(is.character), str_trim))
+
+index=1
+for(x in asteroid_data$CADistanceNominal)
+{
+  a=gsub('.{10}$','',x)
+  asteroid_data$CADistanceNominal[index] = a
+  index=index+1
+}
+
+index=1
+for(x in asteroid_data$CADistanceMinimum)
+{
+  a=gsub('.{10}$','',x)
+  asteroid_data$CADistanceMinimum[index] = a
+  index=index+1
+}
+
+colnames(asteroid_data) = c("Object","CA_Date","CA_Dis_Nom","CA_Dis_Min","V_Rel","V_Infi","H_mag","Diameter")
+
+d1 = gsub('.{10}$','',asteroid_data$Diameter)
+d1 = as.integer(d1)
+
+d2=str_sub(asteroid_data$Diameter,-6)
+d2=gsub('.{2}$','',d2)
+d2 = as.integer(d2)
+
+Diameter = (d1+d2)/2
+
+asteroid_data$Diameter = Diameter
+
+current_date = Sys.Date()
+
+app_month= rep(NA,nrow(asteroid_data))
+app_day = rep(NA,nrow(asteroid_data))
+
+index=1
+  
+elapsed_months <- function(end_date, start_date) {
+  ed <- as.POSIXlt(end_date)
+  sd <- as.POSIXlt(start_date)
+  12 * (ed$year - sd$year) + (ed$mon - sd$mon)
+}
+
+
+for(x in asteroid_data$CA_Date)
+{
+  x=as.Date(x)
+  app_day[index] = as.integer(x - current_date)
+  app_month[index] = elapsed_months(x,current_date)
+  index = index + 1
+}
+
+asteroid_data = cbind(asteroid_data,app_month)
+asteroid_data = cbind(asteroid_data,app_day)
+
+asteroid_data_2 <- read.csv(file="C:/Users/Anirudh/OneDrive/Desktop/DV_REVIEW_ASTEROID_2.csv",header=TRUE,sep=',')
+asteroid_data_2 <- data.frame(asteroid_data_2)
+
+
+asteroid_data_2 <- asteroid_data_2[1:(length(asteroid_data_2)-1)]
+
+index=1
+for(x in asteroid_data_2$CA_Date)
+{
+  a=str_sub(x,1,11)
+  a=gsub('Jan','01',a)
+  a=gsub('Feb','02',a)
+  a=gsub('Mar','03',a)
+  a=gsub('Apr','04',a)
+  a=gsub('May','05',a)
+  a=gsub('Jun','06',a)
+  a=gsub('Jul','07',a)
+  a=gsub('Aug','08',a)
+  a=gsub('Sep','09',a)
+  a=gsub('Oct','10',a)
+  a=gsub('Nov','11',a)
+  a=gsub('Dec','12',a)
+  asteroid_data_2$CA_Date[index] = a
+  index=index+1
+}
+
+asteroid_data_2 %>% 
+  mutate(across(where(is.character), str_trim))
+
+index=1
+for(x in asteroid_data_2$CADistanceNominal)
+{
+  a=gsub('.{10}$','',x)
+  asteroid_data_2$CADistanceNominal[index] = a
+  index=index+1
+}
+
+index=1
+for(x in asteroid_data_2$CADistanceMinimum)
+{
+  a=gsub('.{10}$','',x)
+  asteroid_data_2$CADistanceMinimum[index] = a
+  index=index+1
+}
+
+colnames(asteroid_data_2) = c("Object","CA_Date","CA_Dis_Nom","CA_Dis_Min","V_Rel","V_Infi","H_mag","Diameter")
+
+d1 = gsub('.{10}$','',asteroid_data_2$Diameter)
+d1 = as.integer(d1)
+
+d2=str_sub(asteroid_data_2$Diameter,-6)
+d2=gsub('.{2}$','',d2)
+d2 = as.integer(d2)
+
+index=1
+
+for(x in d1)
+{
+  if(is.na(x))
+  {
+    d1[index] = 1 
+  }
+  index = index + 1
+}
+
+for(x in d2)
+{
+  if(is.na(x))
+  {
+    d2[index] = 1 
+  }
+  index = index + 1
+}
+
+
+Diameter = (d1+d2)/2
+
+asteroid_data_2$Diameter = Diameter
+
+current_date = Sys.Date()
+
+app_month= rep(NA,nrow(asteroid_data_2))
+app_day = rep(NA,nrow(asteroid_data_2))
+
+index=1
+
+elapsed_months <- function(end_date, start_date) {
+  ed <- as.POSIXlt(end_date)
+  sd <- as.POSIXlt(start_date)
+  12 * (ed$year - sd$year) + (ed$mon - sd$mon)
+}
+
+
+for(x in asteroid_data_2$CA_Date)
+{
+  x=as.Date(x)
+  app_day[index] = as.integer(x - current_date)
+  app_month[index] = elapsed_months(x,current_date)
+  index = index + 1
+}
+
+asteroid_data_2 = cbind(asteroid_data_2,app_month)
+asteroid_data_2 = cbind(asteroid_data_2,app_day)
+
+size_arr = rep(NA,nrow(asteroid_data_2))
+col_arr = rep(NA,nrow(asteroid_data_2))
+
+index = 1
+for(x in asteroid_data_2$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data_2$Diameter)))*10000)
+  if(size_arr[index] >= 60)
+  {
+    size_arr[index] = 80
+    col_arr[index] = "red"
+  }
+  else if(size_arr[index] <= 20 )
+  {
+    col_arr[index] = "white"
+  }
+  else if(size_arr[index] > 20 && size_arr[index] < 60 )
+  {
+    col_arr[index] = "orange"
+  }
+  index = index + 1
+}
+```
+Introduction
+=======================================================================
+
+### Asteroids: Near Earth Approaches
+
+Row{fig.width = 10, fig.height = 3}
+-------------------------------------
+
+\
+\
+==> A visualization of known and tracked Near Earth Asteroids, or NEAs that will make a close approach to Earth within the next 12 months, or have made a close approach within the last 12 months, as tracked by NASA's JPL NEO program.
+\
+\
+==> Many NEAs aren't discovered until they've nearly passed us in their orbit of the sun, which is why one side of this graph is so much more populated than the other. The view in our rear-view mirror is better than the one through our windsheild.
+\
+\
+Following is some General Information regarding the upcoming Graphs:\
+==> 1 ld = 384398 km\
+==> Moon Diameter = 3,475km
+\
+\
+==> The Following Graph has following Legends :\
+\
+Size vs Diameter Mapping:\
+\
+Orange : Diameter > 110m and < 300m\
+Red : Diameter >= 300m \
+White : Diameter <=110m\
+\
+
+Row
+-------------------------------------
+
+```{r fig.width = 9, fig.height = 7}
+#Past
+
+
+size_arr = rep(NA,nrow(asteroid_data_2))
+col_arr = rep(NA,nrow(asteroid_data_2))
+
+index = 1
+for(x in asteroid_data_2$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data_2$Diameter)))*10000)
+  if(size_arr[index] >= 60)
+  {
+    size_arr[index] = 80
+    col_arr[index] = "red"
+  }
+  else if(size_arr[index] <= 20 )
+  {
+    col_arr[index] = "white"
+  }
+  else if(size_arr[index] > 20 && size_arr[index] < 60 )
+  {
+    col_arr[index] = "orange"
+  }
+  index = index + 1
+}
+size_arr = (size_arr/20)
+size_arr = size_arr/100
+
+sp <- ggplot(data=asteroid_data_2, aes(x=(as.double(app_day)), y=(as.double(CA_Dis_Nom)) , colour = col_arr ,
+text = paste(
+"Object:Name: ",Object, "\n",
+"Closest Approach Date: ", CA_Date, "\n",
+"Closest Approach Distance : ", CA_Dis_Min, "(au)\n",
+"Velocity(Relative): ", V_Infi, "(km/hr)\n",
+"Diameter: ", Diameter, "(m)\n",
+sep = ""),group = 1  )) + geom_point( aes(size = size_arr)) + scale_color_manual(name = "Size vs Colour Mapping(PAST)", values = c("orange","red","white") ,labels = c("Orange : Diameter > 110m and < 300m", "Red : Diameter >= 300m", "White : Diameter <=110m")) + scale_size_continuous(name = "Diameter mapping",range = c(-1, 10),labels = c("Diameter < 100m ","Diameter >= 100m ","Diameter >= 200m ","Diameter >= 300m ","Diameter >= 400m "))
+sp = sp + theme(
+  panel.background = element_rect(fill = "#0e1428", colour = "#0e1428",
+                                  size = 2, linetype = "dashed"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  plot.background = element_rect(fill = "#0e1428"),
+  axis.line.x = element_line(color = "#0e1428"),
+  axis.line.y = element_line(color = "#0e1428"),
+  axis.title.x = element_text(color = "white"),
+  axis.title.y = element_text(color = "white"),
+  axis.text.x = element_text(color = "white"),
+  axis.text.y = element_text(color = "white"),
+  plot.title = element_text(color="white", size=19,hjust = 0.5, face="bold"),
+  legend.background = element_rect( fill = "black", size = 0.5, linetype = "solid", colour = "white"),
+  legend.text = element_text(colour = "white", size = 12),
+  legend.title = element_text(colour = "white", size = 15)
+)
+
+sp = sp + guides(size = "none")
+sp = sp + geom_vline(xintercept=c(-366,-240,-120,-7,0),linetype='dashed',colour = "white")
+sp = sp + scale_y_continuous(trans = "reverse",name ="Approach Distance in LDU" , labels=c("0 LDU" , "5 LDU" , "10 LDU" , "15 LDU" , "20 LDU"))
+sp = sp + scale_x_continuous(name ="Approach Day",breaks=c(-366,-240,-120,-7,0),labels = (c("1 Year Ago","8 Months Ago","4 Months Ago","Approaching this Week","")))
+sp = sp + ggtitle("Asteroids:Near Earth Approaches(PAST)")
+ggplotly(sp,tooltip = "text")%>%
+        layout(legend = list(
+          orientation = "h",
+          y = -0.2,
+          xanchor = "center",
+          x=0.5
+        )
+        )
+#Future
+size_arr = rep(NA,nrow(asteroid_data))
+col_arr = rep(NA,nrow(asteroid_data))
+index = 1
+for(x in asteroid_data$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data$Diameter)))*10000)
+  if(size_arr[index] >= 100)
+  {
+    size_arr[index] = 90
+    col_arr[index] = "red"
+  }
+  else if(size_arr[index] <= 50 )
+  {
+    col_arr[index] = "white"
+  }
+  else if(size_arr[index] > 50 && size_arr[index] < 100 )
+  {
+    col_arr[index] = "orange"
+  }
+  index = index + 1
+}
+
+size_arr = (size_arr/30)
+size_arr = size_arr/100
+
+sp <- ggplot(data=asteroid_data, aes(x=(as.double(app_day)), y=(as.double(CA_Dis_Nom)) , colour = col_arr ,
+                                     text = paste(
+                                       "Object:Name: ",Object, "\n",
+                                       "Closest Approach Date: ", CA_Date, "\n",
+                                       "Closest Approach Distance : ", CA_Dis_Min, "(au)\n",
+                                       "Velocity(Relative): ", V_Infi, "(km/hr)\n",
+                                       "Diameter: ", Diameter, "(m)\n",
+                                       sep = ""),group = 1  )) + geom_point( aes(size = size_arr)) + scale_color_manual(name = "Size vs Colour Mapping(FUTURE)", values = c("orange","red","white") ,labels = c("Orange : Diameter > 110m and < 300m", "Red : Diameter >= 300m", "White : Diameter <=110m")) + scale_size(name = "Diameter mapping",range = c(-1, 6),labels = c("Diameter < 100m ","Diameter >= 100m ","Diameter >= 200m ","Diameter >= 300m "))
+sp = sp + theme(
+  panel.background = element_rect(fill = "#0e1428", colour = "#0e1428",
+                                  size = 2, linetype = "dashed"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  plot.background = element_rect(fill = "#0e1428"),
+  axis.line.x = element_line(color = "#0e1428"),
+  axis.line.y = element_line(color = "#0e1428"),
+  axis.title.x = element_text(color = "white"),
+  axis.title.y = element_text(color = "white"),
+  axis.text.x = element_text(color = "white"),
+  axis.text.y = element_text(color = "white"),
+legend.background = element_rect( fill = "black", size = 0.5, linetype = "solid", colour = "white"),
+  plot.title = element_text(color="white", size=19,hjust = 0.5, face="bold"),
+legend.text = element_text(colour = "white", size = 12),
+legend.title = element_text(colour = "white", size = 15)
+)
+
+
+sp = sp + geom_vline(xintercept=c(0,7,120,240,366),linetype='dashed',colour = "white")
+sp = sp + scale_y_continuous(trans = "reverse",name ="Approach Distance in LDU" ,limits=c(20,0) , labels=c("0 LDU" , "5 LDU" , "10 LDU" , "15 LDU" , "20 LDU"))
+sp = sp + guides(size = "none")
+sp = sp + scale_x_continuous(name ="Approach Day",breaks=c(0,7,120,240,366),labels = (c("","Approaching this Week","In 4 Months","In 8 Months","In 1 Year")))
+sp = sp + ggtitle("Asteroids:Near Earth Approaches(FUTURE)")
+ggplotly(sp,tooltip = "text")%>%
+        layout(legend = list(
+          orientation = "h",
+          y = -0.2,
+          xanchor = "center",
+          x=0.5
+        )
+        )
+
+
+
+```
+
+
+Exploring The Past
+=======================================================================
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+
+### General Information
+
+\
+\
+\
+Following is some General Information regarding the upcoming Graphs:\
+==> 1 ld = 384398 km\
+==> Moon Diameter = 3,475km\
+\
+\
+\
+==> This is a visualization of known and tracked Near Earth Asteroids, or NEAs that will make a close approach to Earth within the next 12 months, or have made a close approach within the last 12 months, as tracked by NASA's JPL NEO program.\
+\
+==> Many NEAs aren't discovered until they've nearly passed us in their orbit of the sun, which is why one side of this graph is so much more populated than the other. The view in our rear-view mirror is better than the one through our windsheild.\
+
+### Size vs Colour Mapping
+
+```{r  fig.width = 1, fig.height = 2}
+knitr::include_graphics("C:/Users/Anirudh/OneDrive/Pictures/Screenshots/Screenshot (2172).png")
+```
+
+### Diameter Mapping
+
+```{r  fig.width = 3, fig.height = 3}
+knitr::include_graphics("C:/Users/Anirudh/OneDrive/Pictures/Screenshots/Screenshot (2173).png")
+```
+
+### The Asteroid Belt:
+  
+```{r  fig.width = 3.5, fig.height = 3.5}
+knitr::include_graphics("C:/Users/Anirudh/OneDrive/Pictures/Screenshots/asteroid-belt-inner-solar-system.png")
+```
+
+
+### Conclusion
+\
+\
+\
+\
+==> Through the analysis of the NASA JPL Near Earth Object database,we've determined that currently, the object with the highest velocity is the (2020 XV6) asteroid.\
+\
+==> The asteroid (2021 UA1) is the largest closest passing object currently in the active dataset.\
+\
+==> A second outlier object is (2016 AJ193), holding the largest diameter of all objects in the dataset.\
+    Of important note is the condition code 8 classification for (2021 UA1), indicating the asteroid's orbit is highly uncertain.\
+==> This may be a result of the recent discovery of its presence, combined with the high velocity of movement.
+\
+==> The most fearful thing is the velocity and the diameter of a NEO.\
+\
+\
+\
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+    
+### Asteroid Mapping In Space
+
+```{r fig.width = 18, fig.height = 7}
+index = 1
+for(x in asteroid_data_2$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data_2$Diameter)))*10000)
+  if(size_arr[index] >= 60)
+  {
+    size_arr[index] = 80
+    col_arr[index] = "red"
+  }
+  else if(size_arr[index] <= 20 )
+  {
+    col_arr[index] = "white"
+  }
+  else if(size_arr[index] > 20 && size_arr[index] < 60 )
+  {
+    col_arr[index] = "orange"
+  }
+  index = index + 1
+}
+size_arr = (size_arr/20)
+
+par(bg = "#0e1428")
+
+ylim = c(20,-0)
+
+plot(asteroid_data_2$app_day,asteroid_data_2$CA_Dis_Nom  ,ylim = ylim,main="Asteroids:Near Earth Approaches",xlab="Approach Day",ylab="Approach Distance in LDU",axes=FALSE,pch=19,cex = size_arr,col = col_arr,col.main = "white", col.sub = "white",col.lab = "white",fg = "white",xaxt = "n" )
+axis(2,las=1,col = "white",col.axis = "white")
+axis(side = 1 ,at= c(0,-7, -120,-240,-366),col = "white",col.axis = "white")
+abline(v = c(0,-7, -120,-240,-366), col = c("white", "white","white","white"),lty = c(2, 2,2,2), lwd = c(0.5, 0.5,0.5,0.5))
+mtext( "1 Year Ago",side = 3,adj = 0,col="white")
+mtext( "8 Months Ago",side = 3,adj = 0.35,col="white")
+mtext( "4 Months Ago",side = 3,adj = 0.68,col="white")
+mtext( "Approaching This Week",side = 3,adj = 1,col="white")
+par(bg = "white")
+```
+   
+### An Interactive 3D Scatterplot
+
+```{r testrgl}
+
+bg3d("#0e1428")
+r3dDefaults$bg$color <- "gray"
+r3dDefaults$material$color <- "white"
+r3dDefaults$material$lit <- FALSE
+
+app_day = as.numeric(-1*asteroid_data_2$app_day)
+plot3d(app_day,asteroid_data_2$V_Infi,asteroid_data_2$CA_Dis_Min,xlab="Approach Day",ylab="Velocity(Relative)",zlab="Approach Distance in LDU(Minimal)",col = col_arr,pch=19,box = FALSE)
+rglwidget(elementId = "plot3drgl")
+
+```   
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+ 
+### Size vs Velocity Comparision of NEO'S(Figure 1)
+    
+```{r fig.height = 7}
+index1 = 1
+
+for(x in asteroid_data_2$Diameter)
+{
+  if(x == max(asteroid_data_2$Diameter))
+  {
+    break
+  }
+  index1 = index1 + 1
+}
+
+index2 = 1
+
+for(x in asteroid_data_2$V_Infi)
+{
+  if(x == max(asteroid_data_2$V_Infi))
+  {
+    break
+  }
+  index2 = index2 + 1
+}
+
+col_arr = rep("purple",nrow(asteroid_data_2))
+col_arr[index1] = "red"
+col_arr[index2] = "orange"
+
+index=1
+
+for(x in asteroid_data_2$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data_2$Diameter)))*10000)
+  if(size_arr[index] >= 60)
+  {
+    size_arr[index] = 80
+  }
+  index = index + 1
+}
+
+size_arr = (size_arr/20)
+size_arr[index1] = 20
+size_arr[index2] = 20
+
+sp <- ggplot(data=asteroid_data_2, aes(x=as.double(Diameter), y=as.double(V_Infi) ,colour = col_arr , size = size_arr,
+text = paste(
+  "Object:Name: ",Object, "\n",
+  "Closest Approach Date: ", CA_Date, "\n",
+  "Closest Approach Distance : ", CA_Dis_Min, "(au)\n",
+  "Velocity(Relative): ", V_Infi, "(km/hr)\n",
+  "Diameter: ", Diameter, "(m)\n",
+  sep = ""),group = 1  )) + geom_point()
+sp = sp + theme(
+  legend.position = "bottom",
+  legend.box = "vertical",
+legend.background = element_rect( fill = "black", size = 0.5, linetype = "solid", colour = "white"),
+legend.text = element_text(colour = "white", size = 12),
+legend.title = element_text(colour = "white", size = 15)
+
+
+)
+sp = sp + scale_y_continuous(name ="Velocity" , breaks = c(0,5,10,15,20,25,30,25),labels=c("0 km/hr" , "5 km/hr" , "10 km/hr" , "15 km/hr","20 km/hr","25 km/hr","30 km/hr","35 km/hr"))
+sp = sp + scale_x_continuous(name ="Average Diameter(m)",breaks=c(0,200,400,600,800,1000,1200,1400),labels = c("0 m","200 m","400 m","600 m","800 m","1000 m","1200 m","1400 m"))
+
+sp = sp + guides(size = "none")
+
+sp = sp + stat_smooth(method = "lm",formula = y ~ x ,geom = "smooth")
+
+sp = sp + geom_smooth(method='loess',formula=y~x)
+
+sp = sp+ scale_color_manual(name = "Size vs Colour Mapping", values = c("orange","purple","red") ,labels = c("Red : Dangerous NEO's in terms of distance" , "Red : Dangerous NEO's in terms of velocity" , "White : Other NEO's"))
+
+ggplotly(sp,tooltip = "text")%>%
+        layout(legend = list(
+          orientation = "h",
+          y = -0.2,
+          xanchor = "center",
+          x=0.5
+        )
+        )
+
+```
+
+
+### Data View
+\
+\
+Ordered Data by their Diameter \
+\
+\
+\
+\
+```{r}
+c = (asteroid_data_2[order(-asteroid_data_2$Diameter),c(1:8)])
+DT::datatable(c,options = list(), class = "display")
+```  
+
+
+### Conclusions
+\
+\
+\
+\
+==> Figure 1. Visualizing the near Earth object database as velocity by diameter. The asteroid (2020 XV6) represents the fastest moving object in the dataset at 35.93 km/s.\
+\
+==> We can visualize the data with regard to diameter and velocity by plotting the objects. The immediate outliers in the data become apparent in the resulting graph. Two objects, in particular, represent the most extreme ends of the graph.\
+==> They include [(2020 XV6)] and [(2016 AJ193)].\
+\
+==> (2020 XV6) has the highest velocity in the dataset, at 35.93 km/s. (2016 AJ193) has the largest size at a mean of 1374m in diameter.\
+
+\
+\
+```{r}
+
+```  
+
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+
+### Distance to Earth by Size Mapping of NEO'S(Figure 2)
+    
+```{r fig.height = 7}
+index1 = 1
+
+for(x in asteroid_data_2$Diameter)
+{
+  if(x == max(asteroid_data_2$Diameter))
+  {
+    break
+  }
+  index1 = index1 + 1
+}
+
+index2 = 1
+
+for(x in asteroid_data_2$CA_Dis_Min)
+{
+  if(x == min(asteroid_data_2$CA_Dis_Min))
+  {
+    break
+  }
+  index2 = index2 + 1
+}
+
+col_arr = rep("purple",nrow(asteroid_data_2))
+col_arr[index1] = "red"
+col_arr[index2] = "orange"
+
+index=1
+
+for(x in asteroid_data_2$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data_2$Diameter)))*10000)
+  if(size_arr[index] >= 60)
+  {
+    size_arr[index] = 80
+  }
+  index = index + 1
+}
+
+size_arr = (size_arr/20)
+size_arr[index1] = 20
+size_arr[index2] = 20
+
+sp <- ggplot(data=asteroid_data_2, aes(x=as.double(Diameter), y=as.double(CA_Dis_Min) ,colour = col_arr , size = size_arr,
+text = paste(
+  "Object:Name: ",Object, "\n",
+  "Closest Approach Date: ", CA_Date, "\n",
+  "Closest Approach Distance : ", CA_Dis_Min, "(au)\n",
+  "Velocity(Relative): ", V_Infi, "(km/hr)\n",
+  "Diameter: ", Diameter, "(m)\n",
+  sep = ""),group = 1  )) + geom_point()
+sp = sp + theme(
+  legend.position = "bottom",
+  legend.box = "vertical",
+legend.background = element_rect( fill = "black", size = 0.5, linetype = "solid", colour = "white"),
+legend.text = element_text(colour = "white", size = 12),
+legend.title = element_text(colour = "white", size = 15)
+
+
+)
+sp = sp + scale_y_continuous(name ="Distance to Earth(LD)" ,limits=c(0,13), labels=c("0 LDU" , "5 LDU" , "10 LDU" , "15 LDU"))
+sp = sp + scale_x_continuous(name ="Average Diameter(m)",breaks=c(0,200,400,600,800,1000,1200,1400),labels = c("0 m","200 m","400 m","600 m","800 m","1000 m","1200 m","1400 m"))
+
+sp = sp + guides(size = "none")
+
+sp = sp + stat_smooth(method = "lm",formula = y ~ x ,geom = "smooth")
+
+sp = sp+ scale_color_manual(name = "Size vs Colour Mapping", values = c("orange","purple","red") ,labels = c("Red : Dangerous NEO's in terms of distance" , "Red : Dangerous NEO's in terms of velocity" , "White : Other NEO's"))
+
+sp = sp + geom_smooth(method='loess',formula=y~x)
+
+ggplotly(sp,tooltip = "text")%>%
+        layout(legend = list(
+          orientation = "h",
+          y = -0.2,
+          xanchor = "center",
+          x=0.5
+        )
+        )
+
+```
+
+### Data View
+\
+\
+Ordered Data by their Closest Approach Distance \
+\
+\
+\
+\
+```{r}
+c = (asteroid_data_2[order(asteroid_data_2$CA_Dis_Min),c(1:8)])
+DT::datatable(c,options = list(), class = "display")
+```  
+
+
+### Conclusions
+\
+\
+\
+\
+==> Figure 2. The asteroid (2021 UA1), highlighted in red, represents the closest approaching object to Earth included in the dataset.\
+\
+==> We can visualize one of the most critical points with respect to Earth, by displaying the distance of each object by its corresponding size.\
+==> The asteroid (2021 UA1) is the closest approaching object in the dataset. The asteroid will pass by Earth at an estimated distance of 0.02 lunar distance.\
+\
+==> In addition to its estimated approach proximity to Earth, (2021 UA1) is classified by NASA JPL with a [condition code} 8.Condition code is defined as, "orbit uncertainty estimate 0-9, with 0 being good, and 9 being highly uncertain".\
+
+\
+\
+```{r}
+
+```  
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+   
+### Distance to Earth by Velocity Mapping of NEO'S(Figure 3)
+    
+```{r}
+index1 = 1
+
+for(x in asteroid_data_2$V_Infi)
+{
+  if(x == max(asteroid_data_2$V_Infi))
+  {
+    break
+  }
+  index1 = index1 + 1
+}
+
+index2 = 1
+
+for(x in asteroid_data_2$CA_Dis_Min)
+{
+  if(x == min(asteroid_data_2$CA_Dis_Min))
+  {
+    break
+  }
+  index2 = index2 + 1
+}
+
+col_arr = rep("white",nrow(asteroid_data_2))
+col_arr[index1] = "red"
+col_arr[index2] = "orange"
+
+index=1
+
+for(x in asteroid_data_2$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data_2$Diameter)))*10000)
+  if(size_arr[index] >= 60)
+  {
+    size_arr[index] = 80
+  }
+  index = index + 1
+}
+
+size_arr = (size_arr/20)
+size_arr[index1] = 20
+size_arr[index2] = 20
+
+sp <- ggplot(data=asteroid_data_2, aes(x=as.double(V_Infi), y=as.double(CA_Dis_Min) , colour = col_arr , size = size_arr,
+text = paste(
+  "Object:Name: ",Object, "\n",
+  "Closest Approach Date: ", CA_Date, "\n",
+  "Closest Approach Distance : ", CA_Dis_Min, "(au)\n",
+  "Velocity(Relative): ", V_Infi, "(km/hr)\n",
+  "Diameter: ", Diameter, "(m)\n",
+  sep = ""),group = 1  )) + geom_point()
+sp = sp + theme(
+  panel.background = element_rect(fill = "#0e1428", colour = "#0e1428",
+                                  size = 2, linetype = "dashed"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  plot.background = element_rect(fill = "#101838"),
+  axis.line.x = element_line(color = "white"),
+  axis.line.y = element_line(color = "white"),
+  axis.title.x = element_text(color = "white"),
+  axis.title.y = element_text(color = "white"),
+  axis.text.x = element_text(color = "white"),
+  axis.text.y = element_text(color = "white"),
+  legend.position = "bottom",
+  legend.box = "vertical",
+legend.background = element_rect( fill = "black", size = 0.5, linetype = "solid", colour = "white"),
+legend.text = element_text(colour = "white", size = 12),
+legend.title = element_text(colour = "white", size = 15)
+
+
+)
+sp = sp + scale_y_continuous(name ="Distance to Earth(LD)" , labels=c("0 LDU" , "5 LDU" , "10 LDU" , "15 LDU" , "20 LDU"))
+sp = sp + scale_x_continuous(name ="Velocity",breaks=c(0,5,10,15,20,25,30,35),labels = (c("0 km/h","5 km/h","10 km/h","15 km/h","20 km/h","25 km/h","30 km/h","35 km/h")))
+
+sp = sp + guides(size = "none")
+
+sp = sp + stat_smooth(method = "lm",formula = y ~ x ,geom = "smooth")
+
+sp = sp+ scale_color_manual(name = "Size vs Colour Mapping", values = c("orange","red","white") ,labels = c("Red : Dangerous NEO's in terms of distance" , "Red : Dangerous NEO's in terms of velocity" , "White : Other NEO's"))
+
+ggplotly(sp,tooltip = "text")%>%
+        layout(legend = list(
+          orientation = "h",
+          y = -0.2,
+          xanchor = "center",
+          x=0.5
+        )
+        )
+```
+
+### Data View
+\
+\
+Ordered Data by their Relative Velocity \
+\
+\
+\
+\
+```{r fig.height = 7}
+c = (asteroid_data_2[order(-asteroid_data_2$V_Infi),c(1:8)])
+DT::datatable(c,options = list(), class = "display")
+```  
+
+
+### Conclusions
+\
+\
+\
+\
+\
+==> Figure 3. The asteroid (2016 AJ193), highlighted in red, represents the fastest moving and (2021 UA1) is the closest               approaching object within the dataset.\
+\
+==> The velocity of (2016 AJ193) also displays as an outlier, with regard to the dataset.\
+==> The asteroid has a velocity of 35.93 km/s and is the fastest moving near Earth object within the dataset.
+\
+\
+```{r}
+
+
+```  
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+
+### Count Map of NEO's in region of radius 20LDU vs thier approach time to Earth
+    
+```{r fig.height = 8, fig.width = 10}
+
+sp <- ggplot(asteroid_data_2, aes(as.numeric(-1*app_day), as.numeric(CA_Dis_Min)))
+sp = sp + geom_bin2d()
+sp = sp + scale_y_continuous(name ="Approach Distance in LDU" , labels=c("0 LDU" , "5 LDU" , "10 LDU" , "15 LDU" , "20 LDU"))
+sp = sp + scale_x_continuous(name ="Approach Day",breaks=c(0,30,60,90,120,150,180,210,240,270,300,330,360,390),labels = rev(c("Oct","Nov","Dec","Jan(2020)","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov")))
+
+sp
+
+```
+
+### Conclusions
+\
+\
+\
+\
+\
+==>This is a Count Map of NEO'S which shows the number of NEO's reaching     earth and their approach time
+
+```{r}
+
+```  
+
+
+
+Diving into the Future
+=======================================================================
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+
+### General Information
+
+\
+\
+\
+Following is some General Information regarding the upcoming Graphs:\
+==> 1 ld = 384398 km\
+==> Moon Diameter = 3,475km\
+\
+\
+\
+==> This is a visualization of known and tracked Near Earth Asteroids, or NEAs that will make a close approach to Earth within the next 12 months, or have made a close approach within the last 12 months, as tracked by NASA's JPL NEO program.\
+\
+==> Many NEAs aren't discovered until they've nearly passed us in their orbit of the sun, which is why one side of this graph is so much more populated than the other. The view in our rear-view mirror is better than the one through our windsheild.\
+
+### Size vs Colour Mapping
+
+```{r  fig.width = 1, fig.height = 2}
+knitr::include_graphics("C:/Users/Anirudh/OneDrive/Pictures/Screenshots/Screenshot (2172).png")
+```
+
+### Diameter Mapping
+
+```{r  fig.width = 3, fig.height = 3}
+knitr::include_graphics("C:/Users/Anirudh/OneDrive/Pictures/Screenshots/Screenshot (2173).png")
+```
+
+### The Asteroid Belt:
+  
+```{r  fig.width = 3.5, fig.height = 3.5}
+knitr::include_graphics("C:/Users/Anirudh/OneDrive/Pictures/Screenshots/asteroid-belt-inner-solar-system.png")
+```
+
+
+### Conclusion
+\
+\
+\
+\
+==> Through the analysis of the NASA JPL Near Earth Object database, we've determined that currently, the object with the highest velocity is the 455176 (1999 VF22) asteroid. \
+\
+==>  The asteroid (2020 AP1) is the largest closest passing object currently in the active dataset.\
+\
+==> A second outlier object is 7335 (1989 JA), holding the largest diameter of all objects in the dataset. \
+    Of important note is the condition code 6 classification for (2020 AP1), indicating the asteroid's orbit is highly uncertain.\
+==> This may be a result of the recent discovery of its presence, combined with the high velocity of movement.
+\
+==> The most fearful thing is the velocity and the diameter of a NEO.\
+\
+\
+\
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+    
+### Asteroid Mapping In Space
+
+```{r fig.width = 18, fig.height = 7}
+size_arr = rep(NA,nrow(asteroid_data))
+col_arr = rep(NA,nrow(asteroid_data))
+
+index = 1
+
+#white<=50
+#red>=100
+#orange>50 and <100
+# 
+for(x in asteroid_data$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data$Diameter)))*10000)
+  if(size_arr[index] >= 100)
+  {
+    size_arr[index] = 90
+    col_arr[index] = "red"
+  }
+  else if(size_arr[index] <= 50 )
+  {
+    col_arr[index] = "white"
+  }
+  else if(size_arr[index] > 50 && size_arr[index] < 100 )
+  {
+    col_arr[index] = "orange"
+  }
+  index = index + 1
+}
+
+size_arr = (size_arr/30)
+
+par(bg = "#0e1428")
+
+ylim = c(20,-0)
+
+plot(asteroid_data$app_day,asteroid_data$CA_Dis_Nom ,xaxt = "n" ,ylim = ylim,main="Asteroids:Near Earth Approaches",xlab="Approach Day",ylab="Approach Distance in LDU",axes=FALSE,pch=19,cex = size_arr,col = col_arr,col.main = "white", col.sub = "white",col.lab = "white",fg = "white" )
+axis(2,las=1,col = "white",col.axis = "white")
+axis(side = 1 ,at= c(0,7, 120,240,366),col = "white",col.axis = "white")
+abline(v = c(0,7, 120,240,366), col = c("white", "white","white","white"),lty = c(2, 2,2,2), lwd = c(0.5, 0.5,0.5,0.5))
+mtext( "In 1 Year",side = 3,adj = 1,col="white")
+mtext( "In 8 Months",side = 3,adj = 0.68,col="white")
+mtext( "In 4  Months",side = 3,adj = 0.35,col="white")
+mtext( "Approaching This Week",side = 3,adj = 0,col="white")
+par(bg = "white")
+
+
+
+```
+   
+### An Interactive 3D Scatterplot
+
+```{r}
+
+size_arr = rep(NA,nrow(asteroid_data))
+col_arr = rep(NA,nrow(asteroid_data))
+bg3d("#0e1428")
+r3dDefaults$bg$color <- "gray"
+r3dDefaults$material$color <- "white"
+r3dDefaults$material$lit <- FALSE
+
+app_day = as.numeric(-1*asteroid_data$app_day)
+plot3d(app_day,asteroid_data$V_Infi,asteroid_data$CA_Dis_Min,xlab="Approach Day",ylab="Velocity(Relative)",zlab="Approach Distance in LDU(Minimal)",col = col_arr,pch=19,box = FALSE)
+rglwidget(elementId = "plot3drgl")
+
+```   
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+ 
+### Size vs Velocity Comparision of NEO'S(Figure 1)
+    
+```{r fig.height = 7}
+size_arr = rep(NA,nrow(asteroid_data))
+col_arr = rep(NA,nrow(asteroid_data))
+index1 = 1
+
+for(x in asteroid_data$Diameter)
+{
+  if(x == max(asteroid_data$Diameter))
+  {
+    break
+  }
+  index1 = index1 + 1
+}
+
+index2 = 1
+
+for(x in asteroid_data$V_Infi)
+{
+  if(x == max(asteroid_data$V_Infi))
+  {
+    break
+  }
+  index2 = index2 + 1
+}
+
+col_arr = rep("purple",nrow(asteroid_data))
+col_arr[index1] = "red"
+col_arr[index2] = "orange"
+
+index=1
+
+for(x in asteroid_data$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data$Diameter)))*10000)
+  if(size_arr[index] >= 60)
+  {
+    size_arr[index] = 80
+  }
+  index = index + 1
+}
+
+size_arr = (size_arr/20)
+size_arr[index1] = 20
+size_arr[index2] = 20
+
+sp <- ggplot(data=asteroid_data, aes(x=as.double(Diameter), y=as.double(V_Infi) ,colour = col_arr , size = size_arr,
+                                       text = paste(
+                                         "Object:Name: ",Object, "\n",
+                                         "Closest Approach Date: ", CA_Date, "\n",
+                                         "Closest Approach Distance : ", CA_Dis_Min, "(au)\n",
+                                         "Velocity(Relative): ", V_Infi, "(km/hr)\n",
+                                         "Diameter: ", Diameter, "(m)\n",
+                                         sep = ""),group = 1  )) + geom_point()
+sp = sp + theme(
+  legend.position = "bottom",
+  legend.box = "vertical",
+legend.background = element_rect( fill = "black", size = 0.5, linetype = "solid", colour = "white"),
+legend.text = element_text(colour = "white", size = 12),
+legend.title = element_text(colour = "white", size = 15)
+
+
+)
+sp = sp + scale_y_continuous(name ="Velocity" , breaks = c(0,5,10,15,20,25,30,25),labels=c("0 km/hr" , "5 km/hr" , "10 km/hr" , "15 km/hr","20 km/hr","25 km/hr","30 km/hr","35 km/hr"))
+sp = sp + scale_x_continuous(name ="Average Diameter(m)",breaks=c(0,200,400,600,800,1000,1200,1400),labels = c("0 m","200 m","400 m","600 m","800 m","1000 m","1200 m","1400 m"))
+
+sp = sp + guides(size = "none")
+
+sp = sp + stat_smooth(method = "lm",formula = y ~ x ,geom = "smooth")
+
+sp = sp + geom_smooth(method='loess',formula=y~x)
+
+sp = sp+ scale_color_manual(name = "Size vs Colour Mapping", values = c("orange","purple","red") ,labels = c("Red : Dangerous NEO's in terms of distance" , "Red : Dangerous NEO's in terms of velocity" , "White : Other NEO's"))
+
+ggplotly(sp,tooltip = "text")%>%
+        layout(legend = list(
+          orientation = "h",
+          y = -0.2,
+          xanchor = "center",
+          x=0.5
+        )
+        )
+
+```
+
+
+### Data View
+\
+\
+Ordered Data by their Diameter \
+\
+\
+\
+\
+```{r}
+c = (asteroid_data[order(-asteroid_data$Diameter),c(1:8)])
+DT::datatable(c,options = list(), class = "display")
+```  
+
+
+### Conclusions
+\
+\
+\
+\
+==> Figure 1. Visualizing the near Earth object database as velocity by diameter. The asteroid 455176 (1999 VF22) represents the fastest moving object in the dataset at 25.10 km/s.\
+\
+==> We can visualize the data with regard to diameter and velocity by plotting the objects. 
+    The immediate outliers in the data become apparent in the resulting graph. Two objects, in particular, represent the most         extreme ends of the graph. \
+==> They include [455176 (1999 VF22)] and [7335 (1989 JA)].\
+\
+==> 455176 (1999 VF22) has the highest velocity in the dataset, at 25.10 km/s. 7335 (1989 JA) has the largest size at a mean of 1800m in diameter.\
+
+\
+\
+```{r}
+
+```  
+
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+
+### Distance to Earth by Size Mapping of NEO'S(Figure 2)
+    
+```{r fig.height = 7}
+size_arr = rep(NA,nrow(asteroid_data))
+col_arr = rep(NA,nrow(asteroid_data))
+index1 = 1
+
+for(x in asteroid_data$Diameter)
+{
+  if(x == max(asteroid_data$Diameter))
+  {
+    break
+  }
+  index1 = index1 + 1
+}
+
+index2 = 1
+
+for(x in asteroid_data$CA_Dis_Min)
+{
+  if(x == min(asteroid_data$CA_Dis_Min))
+  {
+    break
+  }
+  index2 = index2 + 1
+}
+
+col_arr = rep("purple",nrow(asteroid_data))
+col_arr[index1] = "red"
+col_arr[index2] = "orange"
+
+index=1
+
+for(x in asteroid_data$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data$Diameter)))*10000)
+  if(size_arr[index] >= 60)
+  {
+    size_arr[index] = 80
+  }
+  index = index + 1
+}
+
+size_arr = (size_arr/20)
+size_arr[index1] = 20
+size_arr[index2] = 20
+
+sp <- ggplot(data=asteroid_data, aes(x=as.double(Diameter), y=as.double(CA_Dis_Min) ,colour = col_arr , size = size_arr,
+                                       text = paste(
+                                         "Object:Name: ",Object, "\n",
+                                         "Closest Approach Date: ", CA_Date, "\n",
+                                         "Closest Approach Distance : ", CA_Dis_Min, "(au)\n",
+                                         "Velocity(Relative): ", V_Infi, "(km/hr)\n",
+                                         "Diameter: ", Diameter, "(m)\n",
+                                         sep = ""),group = 1  )) + geom_point()
+sp = sp + theme(
+  legend.position = "bottom",
+  legend.box = "vertical",
+legend.background = element_rect( fill = "black", size = 0.5, linetype = "solid", colour = "white"),
+legend.text = element_text(colour = "white", size = 12),
+legend.title = element_text(colour = "white", size = 15)
+
+
+)
+sp = sp + scale_y_continuous(name ="Distance to Earth(LD)" ,limits=c(0,13), labels=c("0 LDU" , "5 LDU" , "10 LDU" , "15 LDU"))
+sp = sp + scale_x_continuous(name ="Average Diameter(m)",breaks=c(0,200,400,600,800,1000,1200,1400),labels = c("0 m","200 m","400 m","600 m","800 m","1000 m","1200 m","1400 m"))
+
+sp = sp + guides(size = "none")
+
+sp = sp + stat_smooth(method = "lm",formula = y ~ x ,geom = "smooth")
+
+sp = sp + geom_smooth(method='loess',formula=y~x)
+
+sp = sp+ scale_color_manual(name = "Size vs Colour Mapping", values = c("orange","purple","red") ,labels = c("Red : Dangerous NEO's in terms of distance" , "Red : Dangerous NEO's in terms of velocity" , "White : Other NEO's"))
+
+ggplotly(sp,tooltip = "text")%>%
+        layout(legend = list(
+          orientation = "h",
+          y = -0.2,
+          xanchor = "center",
+          x=0.5
+        )
+        )
+```
+
+### Data View
+\
+\
+Ordered Data by their Closest Approach Distance \
+\
+\
+\
+\
+```{r}
+c = (asteroid_data[order(asteroid_data$CA_Dis_Min),c(1:8)])
+DT::datatable(c,options = list(), class = "display")
+```  
+
+
+### Conclusions
+\
+\
+\
+\
+==> Figure 2. The asteroid (2020 AP1), highlighted in orange, represents the closest approaching object to Earth included in the dataset.\
+\
+==> We can visualize one of the most critical points with respect to Earth, by displaying the distance of each object by its corresponding size.\
+==> The asteroid (2020 AP1) is the closest approaching object in the dataset. The asteroid will pass by Earth at an estimated distance of 0.003 lunar distance.\
+\
+==>In addition to its estimated approach proximity to Earth, (2020 AP1) is classified by NASA JPL with a [condition code} 6.Condition code is defined as, "orbit uncertainty estimate 0-9, with 0 being good, and 9 being highly uncertain".\
+
+\
+\
+```{r}
+
+```  
+
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+   
+### Distance to Earth by Velocity Mapping of NEO'S(Figure 3)
+    
+```{r}
+size_arr = rep(NA,nrow(asteroid_data))
+col_arr = rep(NA,nrow(asteroid_data))
+index1 = 1
+
+for(x in asteroid_data$V_Infi)
+{
+  if(x == max(asteroid_data$V_Infi))
+  {
+    break
+  }
+  index1 = index1 + 1
+}
+
+index2 = 1
+
+for(x in asteroid_data$CA_Dis_Min)
+{
+  if(x == min(asteroid_data$CA_Dis_Min))
+  {
+    break
+  }
+  index2 = index2 + 1
+}
+
+col_arr = rep("white",nrow(asteroid_data))
+col_arr[index1] = "red"
+col_arr[index2] = "orange"
+
+index=1
+
+for(x in asteroid_data$Diameter)
+{
+  size_arr[index] = as.integer((as.integer(x)/(sum(asteroid_data$Diameter)))*10000)
+  if(size_arr[index] >= 60)
+  {
+    size_arr[index] = 80
+  }
+  index = index + 1
+}
+
+size_arr = (size_arr/20)
+size_arr[index1] = 20
+size_arr[index2] = 20
+
+sp <- ggplot(data=asteroid_data, aes(x=as.double(V_Infi), y=as.double(CA_Dis_Min) , colour = col_arr , size = size_arr,
+                                       text = paste(
+                                         "Object:Name: ",Object, "\n",
+                                         "Closest Approach Date: ", CA_Date, "\n",
+                                         "Closest Approach Distance : ", CA_Dis_Min, "(au)\n",
+                                         "Velocity(Relative): ", V_Infi, "(km/hr)\n",
+                                         "Diameter: ", Diameter, "(m)\n",
+                                         sep = ""),group = 1  )) + geom_point()
+sp = sp + theme(
+  panel.background = element_rect(fill = "#0e1428", colour = "#0e1428",
+                                  size = 2, linetype = "dashed"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  plot.background = element_rect(fill = "#101838"),
+  axis.line.x = element_line(color = "white"),
+  axis.line.y = element_line(color = "white"),
+  axis.title.x = element_text(color = "white"),
+  axis.title.y = element_text(color = "white"),
+  axis.text.x = element_text(color = "white"),
+  axis.text.y = element_text(color = "white"),
+  legend.position = "bottom",
+  legend.box = "vertical",
+  legend.background = element_rect( fill = "black", size = 0.5, linetype = "solid", colour = "white"),
+  legend.text = element_text(colour = "white", size = 12),
+  legend.title = element_text(colour = "white", size = 15)
+)
+sp = sp + scale_y_continuous(name ="Distance to Earth(LD)" , labels=c("0 LDU" , "5 LDU" , "10 LDU" , "15 LDU" , "20 LDU"))
+sp = sp + scale_x_continuous(name ="Velocity",breaks=c(0,5,10,15,20,25,30,35),labels = (c("0 km/h","5 km/h","10 km/h","15 km/h","20 km/h","25 km/h","30 km/h","35 km/h")))
+
+sp = sp + guides(size = "none")
+
+sp = sp + stat_smooth(method = "lm",formula = y ~ x ,geom = "smooth")
+
+sp = sp+ scale_color_manual(name = "Size vs Colour Mapping", values = c("orange","red","white") ,labels = c("Red : Dangerous NEO's in terms of distance" , "Red : Dangerous NEO's in terms of velocity" , "White : Other NEO's"))
+
+ggplotly(sp,tooltip = "text")%>%
+        layout(legend = list(
+          orientation = "h",
+          y = -0.2,
+          xanchor = "center",
+          x=0.5
+        )
+        )
+```
+
+### Data View
+\
+\
+Ordered Data by their Relative Velocity\
+\
+\
+\
+\
+```{r fig.height = 7}
+c = (asteroid_data[order(-asteroid_data$V_Infi),c(1:8)])
+DT::datatable(c,options = list(), class = "display")
+```  
+
+
+### Conclusions
+\
+\
+\
+\
+\
+==> Figure 3. The asteroid 455176 (1999 VF22), highlighted in red, represents the fastest moving and (2020 AP1) is the closest approaching object within the dataset.\
+\
+==> The velocity of 455176 (1999 VF22) also displays as an outlier, with regard to the dataset.\
+==> The asteroid has a velocity of 25.10 km/s and is the fastest moving near Earth object within the dataset.
+\
+\
+```{r}
+
+
+```  
+
+Row {.tabset .tabset-fade}
+-------------------------------------
+
+### Count Map of NEO's in region of radius 20LDU vs thier approach time to Earth
+    
+```{r fig.height = 8, fig.width = 10}
+
+sp <- ggplot(asteroid_data, aes(as.numeric(-1*app_day), as.numeric(CA_Dis_Min)))
+sp = sp + geom_bin2d()
+sp = sp + scale_y_continuous(name ="Approach Distance in LDU" , labels=c("0 LDU" , "5 LDU" , "10 LDU" , "15 LDU" , "20 LDU"))
+sp = sp + scale_x_continuous(name ="Approach Day",breaks=c(0,30,60,90,120,150,180,210,240,270,300,330,360,390),labels = rev(c("Oct","Nov","Dec","Jan(2020)","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov")))
+
+sp
+
+```
+
+### Conclusions
+\
+\
+\
+\
+\
+==>This is a Count Map of NEO'S which shows the number of NEO's reaching earth and their approach time
+
+```{r}
+
+```  
+

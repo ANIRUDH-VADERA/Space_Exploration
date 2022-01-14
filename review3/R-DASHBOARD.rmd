@@ -1,0 +1,98 @@
+---
+title: "Future Exoplanets and Possibilities"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+library(car)
+library(plotly)
+options(rgl.useNULL=TRUE)
+library(rgl)
+library(plotrix)
+```
+
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+### Habitability 3D Bubble Chart
+
+```{r}
+planets_data=read.csv("C:/Users/Anirudh/OneDrive/Desktop/ExoPlanets.csv",TRUE,sep=",")
+
+discovery_year=planets_data$disc_year
+
+planet_radius=planets_data$pl_rade
+
+planet_mass_wrt_earth=planets_data$pl_bmasse
+
+discovery_method=planets_data$discoverymethod
+
+distance_from_earth=planets_data$sy_dist
+
+planet_orbital_period=planets_data$pl_orbper
+
+planet_temparature=planets_data$st_teff
+
+planet_gravity=planets_data$st_logg
+
+library(plotly)
+
+colors<-c('#4AC6B7','#1972A4','#965F8A','#FF7070','#C61951')
+
+final_bubble<-plot_ly(x=~distance_from_earth,y=~planet_temparature,z=~planet_orbital_period,color=~planet_temparature,size=~planet_radius,colors=colors,marker=list(symbol='circle',sizemode='diameter'),sizes=c(1,50),text=~paste('DiscoveryMethod:',discovery_method,'<br>DiscoveryYear:',discovery_year))
+
+final_bubble<-final_bubble%>%layout(title='HabitabilityMeter',paper_bgcolor='black',scene=list(xaxis=list(title='DistancefromEarth',gridcolor='rgb(255,255,255)',type='log',zerolinewidth=1,ticklen=5,gridwidth=2),yaxis=list(title='Temparature',gridcolor='rgb(255,255,255)',zerolinewidth=1,ticklen=5,gridwith=2),zaxis=list(title='OrbitalPeriod',gridcolor='rgb(255,255,255)',type='log',zerolinewidth=1,ticklen=5,gridwith=2)))
+final_bubble
+
+```
+
+Column {data-width=550}
+-----------------------------------------------------------------------
+
+### Planet Radius vs Planet Mass
+
+```{r}
+planets_data=read.csv("C:/Users/Anirudh/OneDrive/Desktop/ExoPlanets.csv",TRUE,sep=",")
+discovery_year=planets_data$disc_year
+planet_radius=planets_data$pl_rade
+planet_mass_wrt_earth=planets_data$pl_bmasse
+discovery_method=planets_data$discoverymethod
+planet_gravity=planets_data$st_logg
+distance_from_earth=planets_data$sy_dist
+planet_orbital_period=planets_data$pl_orbper
+planet_temparature=planets_data$st_teff
+figu <- plot_ly(
+  planets_data,type='scatter', x = ~planet_radius, y = ~planet_mass_wrt_earth,
+  # Hover text:
+  text = ~paste("Radius ", planet_radius, '$<br>Mass:', planet_mass_wrt_earth),
+  color = ~discovery_year) %>% 
+  layout(plot_bgcolor='black') %>% 
+  layout(paper_bgcolor='grey') #will also accept paper_bgcolor='black' or paper_bgcolor='transparent'
+figu
+
+```
+### Possible Attributes of the Planet we are about to discover
+```{r testrgl}
+planets_data=read.csv("C:/Users/Anirudh/OneDrive/Desktop/ExoPlanets.csv",TRUE,sep=",")
+discovery_year=planets_data$disc_year
+planet_radius=planets_data$pl_rade
+planet_mass_wrt_earth=planets_data$pl_bmasse
+discovery_method=planets_data$discoverymethod
+distance_from_earth=planets_data$sy_dist
+planet_orbital_period=planets_data$pl_orbper
+planet_temparature=planets_data$st_teff
+scatter3d(x=planet_radius,y=planet_mass_wrt_earth,z=distance_from_earth,grid=FALSE,surface=TRUE,bg.col=c("white", "black"))
+rglwidget(elementId = "scatter3drgl")
+```
+
+
+
+
+
+

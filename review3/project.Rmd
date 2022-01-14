@@ -1,0 +1,228 @@
+
+---
+title: "SPACE"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: scroll
+runtime: shiny
+    
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(DT)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+library(shiny)
+library(ggplot2)
+library(reshape2)
+```
+
+# Introduction
+This Section will show you how many missions happened in the past and how much success we had in them </br>
+Also you will be provided with the country wise contribution and their success and failures yearwise 
+
+# Past Missions
+
+## Column {data-height=1000, .tabset .tabset-fade}
+
+### Overview of yearwise Missions (Interactive) 
+
+
+```{r}
+x=read.csv(file="C:/Users/Anirudh/OneDrive/Desktop/Space_Corrected.csv",header=TRUE)
+dates=c(x$Datum)
+year=c()
+unique_year=c()
+for(i in 1:length(dates)){
+  year[i]=strtoi(substring(dates[i], 13,16))
+}
+unique_year=unique(year)
+#extracting the years as strings 
+
+
+place=c(x$Location)
+for(i in 1:length(place)){
+  temp=c(unlist(strsplit(place[i],",")))
+  place[i]=temp[length(temp)]
+}
+#extracting the countries out of the actual addresses given
+
+success=0
+failure=0
+temp_year=c(0,0)
+temp_success=c(0,0)
+temp_failure=c(0,0)
+status=c(x$Status.Mission)
+data=data.frame(year,place,status)
+unique_country=unique(place)
+total=data.frame(table(place))
+unique_year=unique(year)
+freq=c(rep(0,times=length(unique_country)))
+for(j in 1:length(unique_country)){
+  for(i in 1:length(place)){
+    if(tolower(unique_country[j])==tolower(place[i])){
+      freq[j]=freq[j]+1
+    }
+  }
+}
+
+`%+=%` = function(e1,e2) eval.parent(substitute(e1 <- e1 + e2))
+freq_year=c(rep(0,times=length(unique_year)))
+for(j in 1:length(unique_year)){
+  for(i in 1:length(year)){
+    if(unique_year[j]==year[i]){
+      freq_year[j]=freq_year[j]+1
+    }
+  }
+}
+
+custom_df=data.frame(year,x$Status.Mission)
+plot=custom_df %>% group_by(year,x.Status.Mission) %>% summarize(n=n()) %>% mutate(pct=n/sum(n),lbl=scales::percent(pct))
+plot=cbind(plot,freq_year=c(rep(0,times=nrow(plot))))
+year_df=data.frame(unique_year,freq_year)
+for(j in 1:nrow(year_df)){
+  for(i in 1:nrow(plot)){
+    if(plot$year[i]==year_df$unique_year[j]){
+      plot$freq_year[i]=year_df$freq_year[j]
+    }
+  }
+}
+
+
+bp=ggplot(plot,aes( text = paste('</br>Year: ',year,'</br>Status: ',x.Status.Mission,'</br>Total Missions: ', freq_year,'</br>Percentage: ', pct*100,'%')))+geom_bar(aes(year,pct,fill=factor(x.Status.Mission)),stat="identity",position="fill",width=0.9)+scale_y_continuous(seq(0,1,by=0.25),expand = c(0, 0),labels = scales::percent)+scale_fill_manual(values = c("grey0","grey15","grey25","steelblue2"))
+bp=bp+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),axis.text=element_text(size=6))
+bp=bp+labs(x="Year",y="Percentage",title="Success Vs Failure percentage per year",fill="Mission Status")
+ggplotly(bp, tooltip="text")
+
+```
+
+### Overview of yearwise Missions
+```{r}
+success=0
+failure=0
+a=1
+for(k in 1:length(unique_year)){
+  success=0
+  failure=0
+  
+  for(i in 1:length(place)){
+    if(year[i]==unique_year[k]){
+      if(status[i]=="Success"){
+        success%+=%1
+      }
+      else{
+        failure%+=%1
+      }
+    }
+  }
+  temp_year[a]=unique_year[k]
+  temp_success[a]=(success/(success+failure))*100
+  temp_failure[a]=(failure/(success+failure))*100
+  a=a+1
+}
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+bp=barplot(t(matrix(c(temp_success,temp_failure),ncol=2)),names.arg=temp_year,xlab="Year",ylab="Percentage",las=3,cex.names=0.6,col = c("steelblue2","black"),main="Success Vs Failure percentage per year",ylim=c(0,100))
+legend("topright", inset=c(-0.3,0), legend=c("% success","% failure"),pch=19,col=c("steelblue2","black"))
+lines(x=bp,c(freq_year)/2,col="white",lwd=2)
+
+```
+
+
+
+## Column {data-width=500}
+
+
+
+```{r}
+total=total[order(total$Freq,decreasing = TRUE),] #to sort the countries by the total number of missions overall
+master_data=list()
+heading=c()
+temp=0
+temp_data=data.frame()
+unique_country=total$place
+freq=c(total$Freq)
+for(j in 1:length(unique_country)){
+  a=1
+  if(freq[j]>=50){
+  for(k in 1:length(unique_year)){
+    
+    success=0
+    failure=0
+    
+    for(i in 1:length(place)){
+      if(tolower(unique_country[j])==tolower(place[i])){
+      
+        
+      
+        if(unique_year[k]==year[i]){
+          
+         
+         #one year of one country
+          if(tolower(status[i])=="success"){
+            #print(status[i])
+            success%+=%1
+            #print(success)
+            
+          }
+          else{
+            #print("aa")
+            failure%+=%1
+          }
+        }
+        #inside a country per year success or failure
+       
+         
+      }
+    }
+    temp_year[a]=unique_year[k]
+    temp_success[a]=success
+    temp_failure[a]=failure
+    a=a+1
+    
+  }
+  #print(unique_country[j])
+  #print(data.frame(temp_year,temp_success,temp_failure))
+  temp=temp+1
+  temp_data=data.frame(temp_year,temp_success,temp_failure)
+  heading[temp]=j
+  master_data[[temp]]=temp_data
+ 
+
+  
+  }
+}
+
+
+```
+
+
+```{r}
+  selectInput("drop", "Choose plot:", list(1,2,3,4,5,6,7))
+```
+
+### Country Plots
+
+```{r}
+renderPlot({
+data <- master_data[[as.integer(input$drop)]]
+data1 <- melt(data[,c('temp_year','temp_failure','temp_success')], id.vars = 1)
+ggplot(data1, aes(x=temp_year, y=value, fill=variable),na.rm=TRUE)+geom_bar(stat="identity") + geom_hline(data=data, linetype='dotted', aes(yintercept=mean(temp_success))) + scale_y_continuous(limits = c(0,100)) + xlab("Year") + ylab("Number of missions") + ggtitle(unique_country[heading[as.integer(input$drop)]]) + coord_flip() + scale_fill_manual(values = c("black","steelblue2"), name="Mission Status",labels = c("Failure", "Success"))
+})
+```
+
+
+### Pie Charts
+
+
+```{r}
+renderPlot({
+data <- master_data[[as.integer(input$drop)]]
+data <- group_by(data,temp_year) %>% summarize(count1 = sum(temp_success), count2 = sum(temp_failure))
+data1 <- melt(data[,c('temp_year','count2','count1')], id.vars=1)
+ggplot(data1, aes(x="", y=value, fill=variable),na.rm=TRUE)+geom_bar(stat="identity") + xlab("Year") + ylab("Number of missions") + ggtitle(unique_country[heading[as.integer(input$drop)]]) + coord_polar("y", start=0, direction=-1) + scale_fill_manual(values = c("black","steelblue2"), name="Mission Status",labels = c("Failure", "Success")) + geom_text(aes(y = sum(value), label=sum(value)), color = "white")
+
+})
+```
